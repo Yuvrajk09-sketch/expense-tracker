@@ -1,0 +1,27 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Inter', sans-serif;
+}
+
+.card {
+    border-radius: 12px;
+    border: none;
+}
+
+#expense-list .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.expense-info {
+    font-size: 1.1rem;
+}
+
+.expense-amount {
+    font-weight: bold;
+    color: #dc3545;
+}
