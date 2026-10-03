@@ -21,7 +21,7 @@ exports.signup = async (username, email, password) => {
   
   const token = generateAccessToken(user.id); 
   // Return safe user object for auto-login
-  return { id: user.id, username: user.username, email: user.email, token };
+  return { id: user.id, username: user.username, email: user.email, ispremiumuser: user.ispremiumuser, token };
 };
 
 exports.login = async (email, password) => {
@@ -41,5 +41,5 @@ exports.login = async (email, password) => {
   }
   const token = generateAccessToken(user.id);
   // Return safe user object
-  return { id: user.id, username: user.username, email: user.email, token };
+  return { id: user.id, username: user.username, email: user.email, ispremiumuser: user.ispremiumuser, token };
 };

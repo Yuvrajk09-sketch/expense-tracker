@@ -9,6 +9,12 @@ const config = { headers: { 'Authorization': loggedInUser.token } };
 const form = document.getElementById('expense-form');
 const expenseList = document.getElementById('expense-list');
 const totalExpenseDisplay = document.getElementById('total-expense');
+const buyPremiumBtn = document.getElementById('buy-premium-btn');
+
+if (loggedInUser.ispremiumuser) {
+    buyPremiumBtn.textContent = "👑 Premium User";
+    buyPremiumBtn.disabled = true;
+}
 
 let currentEditId = null;
 
@@ -104,3 +110,43 @@ function editExpense(expense) {
 }
 
 window.addEventListener('DOMContentLoaded', fetchExpenses);
+
+document.getElementById('buy-premium-btn').addEventListener('click', async (e) => {
+    try {
+        const response = await axios.get('http://localhost:3000/purchase/premiummembership', config);
+        
+        const cashfree = Cashfree({
+            mode: "sandbox" // Use sandbox for testing
+        });
+        
+        let checkoutOptions = {
+            paymentSessionId: response.data.payment_session_id,
+            redirectTarget: "_modal",
+        };
+        
+        cashfree.checkout(checkoutOptions).then((result) => {
+            if(result.error){
+                alert("Payment failed or cancelled!");
+                axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                    order_id: response.data.order_id
+                }, config);
+            }
+            if(result.paymentDetails){
+                axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+                    order_id: response.data.order_id
+                }, config).then(() => {
+                    alert("Welcome to Premium! You are now a Premium User.");
+                    document.getElementById('buy-premium-btn').textContent = "👑 Premium User";
+                    document.getElementById('buy-premium-btn').disabled = true;
+                    
+                    // Update local storage so it persists across refreshes
+                    loggedInUser.ispremiumuser = true;
+                    localStorage.setItem('user', JSON.stringify(loggedInUser));
+                }).catch(err => alert("Error verifying payment"));
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        alert("Something went wrong with the payment gateway");
+    }
+});
