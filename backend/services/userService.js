@@ -1,5 +1,10 @@
 const { User } = require('../models');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const generateAccessToken = (id) => {
+  return jwt.sign({ userId: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
 
 exports.signup = async (username, email, password) => {
   const existingUser = await User.findOne({ where: { email } });
@@ -14,8 +19,9 @@ exports.signup = async (username, email, password) => {
   
   const user = await User.create({ username, email, password: hashedPassword });
   
+  const token = generateAccessToken(user.id); 
   // Return safe user object for auto-login
-  return { id: user.id, username: user.username, email: user.email };
+  return { id: user.id, username: user.username, email: user.email, token };
 };
 
 exports.login = async (email, password) => {
@@ -33,6 +39,7 @@ exports.login = async (email, password) => {
     error.status = 401;
     throw error;
   }
+  const token = generateAccessToken(user.id);
   // Return safe user object
-  return { id: user.id, username: user.username, email: user.email };
+  return { id: user.id, username: user.username, email: user.email, token };
 };

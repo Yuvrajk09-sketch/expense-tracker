@@ -8,11 +8,8 @@ exports.addExpense = async (req, res, next) => {
       return res.status(400).json({ message: 'All fields are mandatory' });
     }
 
-    const userId = req.headers.userid;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized: User ID is missing' });
-    }
-    const newExpense = await expenseService.addExpense({
+    const userId = req.user.id;
+    const newExpense = await expenseService.addExpense({ 
       amount,
       description,
       category,
@@ -26,10 +23,7 @@ exports.addExpense = async (req, res, next) => {
 
 exports.getExpenses = async (req, res, next) => {
   try {
-    const userId = req.headers.userid;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized: User ID is missing' });
-    }
+    const userId = req.user.id;
     const expenses = await expenseService.getExpenses(userId);
     res.status(200).json({ allExpenses: expenses });
   } catch (err) {
@@ -39,12 +33,8 @@ exports.getExpenses = async (req, res, next) => {
 
 exports.deleteExpense = async (req, res, next) => {
   try {
-    const expenseId = req.params.id; 
-    const userId = req.headers.userid;
-    
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized: User ID is missing' });
-    }
+    const expenseId = req.params.id;
+    const userId = req.user.id; 
     
     if (!expenseId) {
       return res.status(400).json({ message: 'Expense ID is missing' });
@@ -59,12 +49,7 @@ exports.deleteExpense = async (req, res, next) => {
 exports.updateExpense = async (req, res, next) => {
   try {
     const expenseId = req.params.id;
-    const userId = req.headers.userid;
-    const { amount, description, category } = req.body;
-    
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized: User ID is missing' });
-    }
+    const userId = req.user.id;
     
     if (!amount || !description || !category) {
       return res.status(400).json({ message: 'All fields are mandatory' });

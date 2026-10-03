@@ -4,8 +4,8 @@ const loggedInUser = JSON.parse(localStorage.getItem('user'));
 if (!loggedInUser) {
     window.location.href = 'login.html';
 }
-const config = { headers: { 'userId': loggedInUser.id } };
-
+const config = { headers: { 'Authorization': loggedInUser.token } }; 
+ 
 const form = document.getElementById('expense-form');
 const expenseList = document.getElementById('expense-list');
 const totalExpenseDisplay = document.getElementById('total-expense');
