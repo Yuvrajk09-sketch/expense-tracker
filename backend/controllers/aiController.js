@@ -11,8 +11,12 @@ exports.getFinancialAdvice = async (req, res) => {
             return res.status(400).json({ message: "No prompt provided." });
         }
 
-        // 1. Fetch all expenses for the logged-in user
-        const expenses = await Expense.findAll({ where: { userId: req.user.id } });
+        // 1. Fetch only the 50 most recent expenses for the logged-in user to save AI tokens and DB load
+        const expenses = await Expense.findAll({ 
+            where: { userId: req.user.id },
+            order: [['createdAt', 'DESC']],
+            limit: 50
+        });
         
         let expenseContext = "The user has no logged expenses yet.";
         if (expenses && expenses.length > 0) {
