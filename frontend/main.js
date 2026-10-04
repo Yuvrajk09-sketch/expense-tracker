@@ -14,6 +14,7 @@ const buyPremiumBtn = document.getElementById('buy-premium-btn');
 if (loggedInUser.ispremiumuser) {
     buyPremiumBtn.textContent = "👑 Premium User";
     buyPremiumBtn.disabled = true;
+    document.getElementById('leaderboard-section').classList.remove('d-none');
 }
 
 let currentEditId = null;
@@ -130,7 +131,7 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
                 axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
                     order_id: response.data.order_id
                 }, config);
-            }
+            } 
             if(result.paymentDetails){
                 axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
                     order_id: response.data.order_id
@@ -142,11 +143,41 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
                     // Update local storage so it persists across refreshes
                     loggedInUser.ispremiumuser = true;
                     localStorage.setItem('user', JSON.stringify(loggedInUser));
+                    
+                    // Show leaderboard section
+                    document.getElementById('leaderboard-section').classList.remove('d-none');
                 }).catch(err => alert("Error verifying payment"));
             }
         });
     } catch (error) {
         console.error(error);
         alert("Something went wrong with the payment gateway");
+    }
+});
+
+document.getElementById('show-leaderboard-btn').addEventListener('click', async () => {
+    try {
+        const response = await axios.get('http://localhost:3000/premium/leaderboard', config);
+        const leaderboardData = response.data;
+        
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.innerHTML = ''; // Clear previous data
+        
+        leaderboardData.forEach((user, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            
+            // Add a trophy for the #1 spot
+            const rank = index === 0 ? '🏆' : `#${index + 1}`;
+            
+            li.innerHTML = `
+                <span><strong>${rank}</strong> ${user.username}</span>
+                <span class="badge bg-primary rounded-pill">$${user.totalExpenses}</span>
+            `;
+            leaderboardList.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        alert('Could not load leaderboard.');
     }
 });

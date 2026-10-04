@@ -6,15 +6,15 @@ const authenticate = (req, res, next) => {
     if (!token) {
       return res.status(401).json({ success: false, message: 'Token is missing' });
     }
-    
+
     // Decrypt token
-    const user = jwt.verify(token, process.env.JWT_SECRET);  
-    
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+
     // Attach user id to the request object
-    req.user = { id: user.userId }; 
+    req.user = { id: user.userId };
     next();
   } catch (err) {
-    console.log(err); 
+    console.log(err);
     return res.status(401).json({ success: false, message: 'Invalid token' });
   }
 };

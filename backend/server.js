@@ -9,6 +9,7 @@ const { User, Expense } = require('./models');
 const expenseRoutes = require('./routes/expenseRoutes');
 const userRoutes = require('./routes/userRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
+const premiumRoutes = require('./routes/premiumRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(bodyParser.json());
 app.use('/expense', expenseRoutes);
 app.use('/user', userRoutes);
 app.use('/purchase', purchaseRoutes);
+app.use('/premium', premiumRoutes);
 
  
 sequelize.sync({ alter: true })

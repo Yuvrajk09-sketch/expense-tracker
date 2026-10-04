@@ -13,7 +13,7 @@ async function test() {
         customer_phone: "9999999999",
         customer_name: "Customer"
       }
-    };
+    }; 
     
     const config = {
       headers: {

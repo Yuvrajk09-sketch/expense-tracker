@@ -4,9 +4,9 @@ const axios = require('axios');
 
 exports.purchasePremium = async (req, res) => {
   try {
-    const amount = 2500; // 25.00 INR (or 2500 in lowest denomination depending on API, Cashfree uses rupees directly, so 2500 INR)
+    const amount = 2500;
     
-    // Generate a unique order id
+    // Generate a unique order id 
     const orderId = `order_${req.user.id}_${Date.now()}`;
     
     const requestData = {
