@@ -59,6 +59,19 @@
                 <!-- Leaderboard data will be appended here -->
             </ul>
         </div>
+
+        <div id="ai-advisor-section" class="card shadow p-4 mt-4 bg-light border-info">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 text-info">🤖 AI Financial Advisor</h4>
+            </div>
+            <div class="input-group mb-3">
+                <input type="text" id="ai-prompt-input" class="form-control" placeholder="Ask AI anything about your expenses... (e.g., How can I save on food?)">
+                <button id="ask-ai-btn" class="btn btn-info text-white">Ask Gemini</button>
+            </div>
+            <div id="ai-response-box" class="p-3 bg-white rounded border d-none" style="font-style: italic;">
+                <!-- AI Response will go here -->
+            </div>
+        </div>
     </div>
 
     <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>

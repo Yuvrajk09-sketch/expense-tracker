@@ -152,10 +152,10 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
 });
 
 document.getElementById('show-leaderboard-btn').addEventListener('click', async () => {
-    // Check if the user is premium first!
+   
     if (!loggedInUser.ispremiumuser) {
         alert("Buy premium to access the leaderboard!");
-        return; // Stop the code here
+        return; 
     }
 
     try {
@@ -163,13 +163,13 @@ document.getElementById('show-leaderboard-btn').addEventListener('click', async 
         const leaderboardData = response.data;
         
         const leaderboardList = document.getElementById('leaderboard-list');
-        leaderboardList.innerHTML = ''; // Clear previous data
+        leaderboardList.innerHTML = ''; 
         
         leaderboardData.forEach((user, index) => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
             
-            // Add a trophy for the #1 spot
+           
             const rank = index === 0 ? '🏆' : `#${index + 1}`;
             
             li.innerHTML = `
@@ -181,5 +181,44 @@ document.getElementById('show-leaderboard-btn').addEventListener('click', async 
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
         alert('Could not load leaderboard.');
+    }
+});
+
+// AI Financial Advisor Logic
+document.getElementById('ask-ai-btn').addEventListener('click', async () => {
+    if (!loggedInUser.ispremiumuser) {
+        alert("Buy premium to unlock the AI Financial Advisor!");
+        return;
+    }
+
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const aiBtn = document.getElementById('ask-ai-btn');
+    const aiResponseBox = document.getElementById('ai-response-box');
+    
+    const userPrompt = aiPromptInput.value.trim();
+    if (!userPrompt) {
+        alert("Please enter a question or prompt for the AI.");
+        return;
+    }
+
+    // Show loading state
+    aiBtn.textContent = "Analyzing...";
+    aiBtn.disabled = true;
+    aiResponseBox.classList.remove('d-none');
+    aiResponseBox.innerHTML = '<span class="text-muted">Gemini is thinking...</span>';
+
+    try {
+        const response = await axios.post('http://localhost:3000/ai/advisor', { prompt: userPrompt }, config);
+        
+        // Display the response
+        aiResponseBox.innerHTML = `<strong class="text-info">Advice:</strong> ${response.data.advice}`;
+    } catch (error) {
+        console.error('AI Error:', error);
+        aiResponseBox.innerHTML = '<span class="text-danger">Failed to get advice. Please make sure you are logged in and try again!</span>';
+    } finally {
+        // Reset button
+        aiBtn.textContent = "Ask Gemini";
+        aiBtn.disabled = false;
+        aiPromptInput.value = '';
     }
 });
