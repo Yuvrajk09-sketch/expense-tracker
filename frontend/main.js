@@ -214,11 +214,7 @@ document.getElementById('ask-ai-btn').addEventListener('click', async () => {
         aiResponseBox.innerHTML = `<strong class="text-info">Advice:</strong> ${response.data.advice}`;
     } catch (error) {
         console.error('AI Error:', error);
-        let errorMsg = "Please try again later.";
-        if (error.response && error.response.data && error.response.data.message) {
-            errorMsg = error.response.data.message;
-        }
-        aiResponseBox.innerHTML = `<span class="text-danger">Failed to get advice: ${errorMsg}</span>`;
+        aiResponseBox.innerHTML = '<span class="text-danger">Failed to get advice. Please try again later.</span>';
     } finally {
         // Reset button
         aiBtn.textContent = "Ask Gemini";
