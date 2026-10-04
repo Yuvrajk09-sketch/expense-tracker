@@ -14,7 +14,6 @@ const buyPremiumBtn = document.getElementById('buy-premium-btn');
 if (loggedInUser.ispremiumuser) {
     buyPremiumBtn.textContent = "👑 Premium User";
     buyPremiumBtn.disabled = true;
-    document.getElementById('leaderboard-section').classList.remove('d-none');
 }
 
 let currentEditId = null;
@@ -143,9 +142,6 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
                     // Update local storage so it persists across refreshes
                     loggedInUser.ispremiumuser = true;
                     localStorage.setItem('user', JSON.stringify(loggedInUser));
-                    
-                    // Show leaderboard section
-                    document.getElementById('leaderboard-section').classList.remove('d-none');
                 }).catch(err => alert("Error verifying payment"));
             }
         });
@@ -156,6 +152,12 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
 });
 
 document.getElementById('show-leaderboard-btn').addEventListener('click', async () => {
+    // Check if the user is premium first!
+    if (!loggedInUser.ispremiumuser) {
+        alert("Buy premium to access the leaderboard!");
+        return; // Stop the code here
+    }
+
     try {
         const response = await axios.get('http://localhost:3000/premium/leaderboard', config);
         const leaderboardData = response.data;
