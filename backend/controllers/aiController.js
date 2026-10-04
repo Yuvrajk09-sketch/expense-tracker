@@ -23,15 +23,19 @@ exports.getFinancialAdvice = async (req, res) => {
             expenseContext = expenses.map(e => `- ${e.category}: $${e.amount} (${e.description})`).join('\n');
         }
 
-        // 3. Create the prompt for Gemini
+        // 3. Create the prompt for Gemini with strict guardrails
         const prompt = `
-        You are an expert financial advisor. Your client has provided their recent expense history:
+        You are a strict, expert financial advisor for an Expense Tracker app. 
+        Your client has provided their recent expense history:
         ${expenseContext}
 
         The client is asking you the following question/prompt:
         "${userPrompt}"
         
-        Please provide a helpful, concise response. Do not use markdown formatting like bold or italics. Keep it plain text.
+        CRITICAL RULES:
+        1. You MUST ONLY answer questions related to personal finance, budgeting, saving money, or analyzing the provided expenses.
+        2. If the user asks about ANYTHING else (e.g., programming, general knowledge, jokes, etc.), you MUST politely refuse to answer and remind them that you are strictly a financial advisor.
+        3. Provide a helpful, concise response. Do not use markdown formatting like bold or italics. Keep it plain text.
         `;
 
         // 4. Call the Gemini API
