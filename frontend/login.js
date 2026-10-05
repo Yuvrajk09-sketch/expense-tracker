@@ -31,3 +31,23 @@ form.addEventListener('submit', async (e) => {
     }
   }
 });
+
+document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('forgot-password-form').classList.toggle('d-none');
+});
+
+document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value;
+  const messageDiv = document.getElementById('forgot-message');
+  
+  try {
+    const res = await axios.post('http://localhost:3000/password/forgotpassword', { email });
+    messageDiv.className = 'text-success text-center mt-2';
+    messageDiv.innerText = res.data.message;
+  } catch (err) {
+    messageDiv.className = 'text-danger text-center mt-2';
+    messageDiv.innerText = err.response?.data?.message || 'Something went wrong';
+  }
+});

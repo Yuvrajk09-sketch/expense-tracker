@@ -11,17 +11,20 @@ const userRoutes = require('./routes/userRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const premiumRoutes = require('./routes/premiumRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const passwordRoutes = require('./routes/passwordRoutes');
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/expense', expenseRoutes);
 app.use('/user', userRoutes);
 app.use('/purchase', purchaseRoutes);
 app.use('/premium', premiumRoutes);
 app.use('/ai', aiRoutes);
+app.use('/password', passwordRoutes);
 
 sequelize.sync({ alter: true })
   .then((result) => { 
