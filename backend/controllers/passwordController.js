@@ -17,7 +17,7 @@ exports.forgotpassword = async (req, res) => {
                 sender: { email: "yuvraj.keshu09@gmail.com" },
                 to: [{ email: user.email }],
                 subject: "Reset your password",
-                htmlContent: `<p>Click <a href="http://localhost:3000/password/resetpassword/${id}">here</a> to reset your password</p>`
+                htmlContent: `<p>Click <a href="http://localhost:8080/resetpassword.html?id=${id}">here</a> to reset your password</p>`
             };
 
             const response = await axios.post(url, data, {
@@ -43,28 +43,12 @@ exports.resetpassword = async (req, res) => {
         const id = req.params.id;
         const forgotpasswordrequest = await ForgotPasswordRequests.findOne({ where: { id, isActive: true } });
         if (forgotpasswordrequest) {
-            res.status(200).send(`
-                <html>
-                    <head>
-                        <title>Update Password</title>
-                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                    </head>
-                    <body>
-                        <div class="container mt-5">
-                            <form action="/password/updatepassword/${id}" method="POST">
-                                <label for="newpassword" class="form-label">Enter New Password</label>
-                                <input type="password" name="newpassword" class="form-control" required></input>
-                                <button type="submit" class="btn btn-primary mt-3">Update Password</button>
-                            </form>
-                        </div>
-                    </body>
-                </html>
-            `);
+            res.status(200).json({ success: true, message: 'Link is valid' });
         } else {
-            res.status(404).send('<html><body><h4>Link is invalid or has expired</h4></body></html>');
+            res.status(404).json({ success: false, message: 'Link is invalid or has expired' });
         }
     } catch (err) {
-        res.status(500).send('<html><body><h4>Something went wrong</h4></body></html>');
+        res.status(500).json({ success: false, message: 'Something went wrong' });
     }
 };
 
@@ -75,11 +59,11 @@ exports.updatepassword = async (req, res) => {
 
         const resetpasswordrequest = await ForgotPasswordRequests.findOne({ where: { id: resetId } });
         if (!resetpasswordrequest) {
-            return res.status(404).send('<html><body><h4>Invalid request</h4></body></html>');
+            return res.status(404).json({ success: false, message: 'Invalid request' });
         }
         
         if (!resetpasswordrequest.isActive) {
-            return res.status(400).send('<html><body><h4>Link has expired</h4></body></html>');
+            return res.status(400).json({ success: false, message: 'Link has expired' });
         }
 
         const user = await User.findOne({ where: { id: resetpasswordrequest.userId } });
@@ -88,11 +72,11 @@ exports.updatepassword = async (req, res) => {
             const hashedPassword = await bcrypt.hash(newpassword, saltRounds);
             await user.update({ password: hashedPassword });
             await resetpasswordrequest.update({ isActive: false });
-            res.status(200).send('<html><body><h4>Successfully updated the password. You can now login.</h4></body></html>');
+            res.status(200).json({ success: true, message: 'Successfully updated the password. You can now login.' });
         } else {
-            return res.status(404).send('<html><body><h4>User does not exist</h4></body></html>');
+            return res.status(404).json({ success: false, message: 'User does not exist' });
         }
     } catch (err) {
-        res.status(500).send('<html><body><h4>Something went wrong</h4></body></html>');
+        res.status(500).json({ success: false, message: 'Something went wrong' });
     }
 };
