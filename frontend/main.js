@@ -42,8 +42,6 @@ document.getElementById('next-page-btn').addEventListener('click', () => {
 if (loggedInUser.ispremiumuser) {
     buyPremiumBtn.textContent = "👑 Premium User";
     buyPremiumBtn.disabled = true;
-    downloadBtn.classList.remove('d-none');
-    premiumDashboardSection.classList.remove('d-none');
 }
 
 form.addEventListener('submit', async (e) => {
@@ -117,6 +115,10 @@ async function fetchExpenses() {
         document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
         document.getElementById('prev-page-btn').disabled = currentPage === 1;
         document.getElementById('next-page-btn').disabled = currentPage >= totalPages;
+
+        if (loggedInUser.ispremiumuser) {
+            loadDashboard();
+        }
 
     } catch (error) {
         console.error('Error fetching expenses:', error);
@@ -306,7 +308,15 @@ document.getElementById('ask-ai-btn').addEventListener('click', async () => {
 });
 
 // Premium Dashboard Logic
-document.getElementById('load-dashboard-btn').addEventListener('click', async () => {
+document.getElementById('load-dashboard-btn').addEventListener('click', () => {
+    if (!loggedInUser.ispremiumuser) {
+        alert("Buy premium to access the dashboard!");
+        return;
+    }
+    loadDashboard();
+});
+
+async function loadDashboard() {
     try {
         const response = await axios.get('http://localhost:3000/premium/dashboard', config);
         const { dailyBreakdown, monthlyBreakdown } = response.data;
@@ -340,12 +350,15 @@ document.getElementById('load-dashboard-btn').addEventListener('click', async ()
 
     } catch (error) {
         console.error('Error loading dashboard:', error);
-        alert('Could not load dashboard.');
     }
-});
+}
 
 // Download Expenses Feature
 document.getElementById('download-expenses-btn').addEventListener('click', async () => {
+    if (!loggedInUser.ispremiumuser) {
+        alert("Buy premium to download your expenses!");
+        return;
+    }
     try {
         const response = await axios.get('http://localhost:3000/premium/download', {
             ...config,

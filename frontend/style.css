@@ -1,27 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 body {
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     font-family: 'Inter', sans-serif;
+    min-height: 100vh;
 }
 
 .card {
-    border-radius: 12px;
+    border-radius: 16px;
     border: none;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: scale(1.02);
 }
 
 #expense-list .list-group-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(222, 226, 230, 0.5);
+    background: white;
+    transition: background 0.2s;
+}
+
+#expense-list .list-group-item:hover {
+    background: #f8f9fa;
 }
 
 .expense-info {
     font-size: 1.1rem;
+    font-weight: 500;
 }
 
 .expense-amount {
-    font-weight: bold;
+    font-weight: 700;
     color: #dc3545;
+}
+
+.income-amount {
+    font-weight: 700;
+    color: #198754;
+}
+
+h2 {
+    font-weight: 700;
+    color: #2c3e50;
 }

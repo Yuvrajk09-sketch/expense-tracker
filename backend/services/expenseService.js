@@ -1,4 +1,4 @@
-const { Expense, User } = require('../models');
+const { Expense, User, MonthlySummary } = require('../models');
 const sequelize = require('../util/database');
 
 exports.addExpense = async (expenseData) => {
@@ -10,6 +10,15 @@ exports.addExpense = async (expenseData) => {
       where: { id: expenseData.userId }, 
       transaction: t 
     });
+
+    const monthStr = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    const [summary] = await MonthlySummary.findOrCreate({
+      where: { userId: expenseData.userId, month: monthStr },
+      defaults: { income: 0, expense: 0 },
+      transaction: t
+    });
+    await summary.increment('expense', { by: expenseData.amount, transaction: t });
+
     await t.commit();
     return expense;
   } catch (err) {
@@ -59,6 +68,16 @@ exports.deleteExpense = async (id, userId) => {
         where: { id: userId }, 
         transaction: t 
       });
+
+      const monthStr = new Date(expense.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' });
+      const summary = await MonthlySummary.findOne({
+        where: { userId, month: monthStr },
+        transaction: t
+      });
+      if (summary) {
+        await summary.decrement('expense', { by: expense.amount, transaction: t });
+      }
+
       await expense.destroy({ transaction: t });
     }
     await t.commit();
@@ -80,6 +99,16 @@ exports.updateExpense = async (id, expenseData, userId) => {
         where: { id: userId }, 
         transaction: t 
       });
+
+      const monthStr = new Date(expense.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' });
+      const summary = await MonthlySummary.findOne({
+        where: { userId, month: monthStr },
+        transaction: t
+      });
+      if (summary) {
+        await summary.increment('expense', { by: difference, transaction: t });
+      }
+
       await expense.update(expenseData, { transaction: t });
     }
     await t.commit();

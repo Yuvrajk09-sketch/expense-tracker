@@ -12,14 +12,16 @@ exports.getLeaderboardData = async () => {
 };
 
 exports.getDashboardData = async (userId) => {
-    const { Expense, Income } = require('../models');
+    const { Expense, Income, MonthlySummary } = require('../models');
     
-    // Fetch all expenses and incomes for the user
-    const expenses = await Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
-    const incomes = await Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    // Fetch all expenses, incomes, and monthly summaries concurrently
+    const [expenses, incomes, monthlySummaries] = await Promise.all([
+        Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
+        Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
+        MonthlySummary.findAll({ where: { userId } })
+    ]);
     
     const dailyBreakdownMap = {};
-    const monthlyBreakdownMap = {};
     
     // Process Expenses
     expenses.forEach(exp => {
@@ -40,12 +42,6 @@ exports.getDashboardData = async (userId) => {
             };
         }
         dailyBreakdownMap[dailyKey].expense += exp.amount;
-        
-        // Monthly
-        if (!monthlyBreakdownMap[monthStr]) {
-            monthlyBreakdownMap[monthStr] = { month: monthStr, income: 0, expense: 0, savings: 0 };
-        }
-        monthlyBreakdownMap[monthStr].expense += exp.amount;
     });
 
     // Process Incomes
@@ -67,29 +63,27 @@ exports.getDashboardData = async (userId) => {
             };
         }
         dailyBreakdownMap[dailyKey].income += inc.amount;
-        
-        // Monthly
-        if (!monthlyBreakdownMap[monthStr]) {
-            monthlyBreakdownMap[monthStr] = { month: monthStr, income: 0, expense: 0, savings: 0 };
-        }
-        monthlyBreakdownMap[monthStr].income += inc.amount;
-    });
-    
-    // Calculate Savings for Monthly
-    Object.values(monthlyBreakdownMap).forEach(month => {
-        month.savings = month.income - month.expense;
     });
     
     const dailyBreakdown = Object.values(dailyBreakdownMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const monthlyBreakdown = Object.values(monthlyBreakdownMap);
+    
+    // Process Monthly from Summary Table
+    const monthlyBreakdown = monthlySummaries.map(summary => ({
+        month: summary.month,
+        income: summary.income,
+        expense: summary.expense,
+        savings: summary.income - summary.expense
+    }));
     
     return { dailyBreakdown, monthlyBreakdown };
 };
 
 exports.getUserExpenses = async (userId) => {
     const { Expense, Income } = require('../models');
-    const expenses = await Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
-    const incomes = await Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    const [expenses, incomes] = await Promise.all([
+        Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
+        Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] })
+    ]);
     
     const combined = [];
     
