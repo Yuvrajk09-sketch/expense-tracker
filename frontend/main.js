@@ -8,15 +8,42 @@ const config = { headers: { 'Authorization': loggedInUser.token } };
  
 const form = document.getElementById('expense-form');
 const expenseList = document.getElementById('expense-list');
-const totalExpenseDisplay = document.getElementById('total-expense');
 const buyPremiumBtn = document.getElementById('buy-premium-btn');
+const downloadBtn = document.getElementById('download-expenses-btn');
+const premiumDashboardSection = document.getElementById('premium-dashboard-section');
+
+let currentEditId = null;
+let currentPage = 1;
+let currentLimit = localStorage.getItem('expensesLimit') || 5;
+
+// Set initial value in dropdown
+document.getElementById('limit-select').value = currentLimit;
+
+document.getElementById('limit-select').addEventListener('change', (e) => {
+    currentLimit = e.target.value;
+    localStorage.setItem('expensesLimit', currentLimit);
+    currentPage = 1; // Reset to page 1 on limit change
+    fetchExpenses();
+});
+
+document.getElementById('prev-page-btn').addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        fetchExpenses();
+    }
+});
+
+document.getElementById('next-page-btn').addEventListener('click', () => {
+    currentPage++;
+    fetchExpenses();
+});
 
 if (loggedInUser.ispremiumuser) {
     buyPremiumBtn.textContent = "👑 Premium User";
     buyPremiumBtn.disabled = true;
+    downloadBtn.classList.remove('d-none');
+    premiumDashboardSection.classList.remove('d-none');
 }
-
-let currentEditId = null;
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -43,20 +70,47 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
+document.getElementById('income-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const amount = document.getElementById('income-amount').value;
+    const description = document.getElementById('income-description').value;
+    const category = document.getElementById('income-category').value;
+
+    const incomeData = { amount, description, category };
+
+    try {
+        await axios.post('http://localhost:3000/income/add-income', incomeData, config);
+        document.getElementById('income-form').reset();
+        fetchExpenses();
+    } catch (error) {
+        console.error('Error saving income:', error);
+    }
+});
+
 async function fetchExpenses() {
     try {
-        const response = await axios.get(`${apiUrl}/get-expenses`, config);
+        const response = await axios.get(`${apiUrl}/get-expenses?page=${currentPage}&limit=${currentLimit}`, config);
         const expenses = response.data.allExpenses;
+        const totalCount = response.data.totalCount;
+        const totalPages = response.data.totalPages || 1;
         
+        // Ensure currentPage reflects out-of-bound adjustments by backend
+        if (response.data.currentPage) {
+            currentPage = response.data.currentPage;
+        }
+
         expenseList.innerHTML = '';
-        let total = 0;
 
         expenses.forEach(expense => {
-            total += parseFloat(expense.amount);
             showExpenseOnScreen(expense);
         });
 
-        totalExpenseDisplay.textContent = total.toFixed(2);
+        // Update Pagination UI
+        document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById('prev-page-btn').disabled = currentPage === 1;
+        document.getElementById('next-page-btn').disabled = currentPage >= totalPages;
+
     } catch (error) {
         console.error('Error fetching expenses:', error);
     }
@@ -68,21 +122,30 @@ function showExpenseOnScreen(expense) {
     
     const infoDiv = document.createElement('div');
     infoDiv.className = 'expense-info';
-    infoDiv.innerHTML = `<span class="expense-amount">$${expense.amount}</span> - ${expense.description} <span class="badge bg-secondary ms-2">${expense.category}</span>`;
+    
+    // Check if it's income or expense
+    const isIncome = expense.type === 'income';
+    const amountClass = isIncome ? 'text-success fw-bold' : 'text-danger fw-bold';
+    const typeBadge = isIncome ? '<span class="badge bg-success ms-2">Income</span>' : '<span class="badge bg-danger ms-2">Expense</span>';
+    
+    infoDiv.innerHTML = `<span class="${amountClass}">$${expense.amount}</span> - ${expense.description} <span class="badge bg-secondary ms-2">${expense.category}</span> ${typeBadge}`;
     
     const actionsDiv = document.createElement('div');
     
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-sm btn-outline-warning me-2';
-    editBtn.textContent = 'Edit';
-    editBtn.onclick = () => editExpense(expense);
+    // We only support editing expenses for now based on original code
+    if (!isIncome) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-outline-warning me-2';
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => editExpense(expense);
+        actionsDiv.appendChild(editBtn);
+    }
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-outline-danger';
     deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = () => deleteExpense(expense.id);
+    deleteBtn.onclick = () => deleteExpense(expense.id, expense.type || 'expense');
     
-    actionsDiv.appendChild(editBtn);
     actionsDiv.appendChild(deleteBtn);
     
     li.appendChild(infoDiv);
@@ -91,12 +154,16 @@ function showExpenseOnScreen(expense) {
     expenseList.appendChild(li);
 }
 
-async function deleteExpense(id) {
+async function deleteExpense(id, type) {
     try {
-        await axios.delete(`${apiUrl}/delete-expense/${id}`, config);
+        if (type === 'income') {
+            await axios.delete(`http://localhost:3000/income/delete-income/${id}`, config);
+        } else {
+            await axios.delete(`${apiUrl}/delete-expense/${id}`, config);
+        }
         fetchExpenses();
     } catch (error) {
-        console.error('Error deleting expense:', error);
+        console.error('Error deleting transaction:', error);
     }
 }
 
@@ -142,6 +209,8 @@ document.getElementById('buy-premium-btn').addEventListener('click', async (e) =
                     // Update local storage so it persists across refreshes
                     loggedInUser.ispremiumuser = true;
                     localStorage.setItem('user', JSON.stringify(loggedInUser));
+                    downloadBtn.classList.remove('d-none');
+                    premiumDashboardSection.classList.remove('d-none');
                 }).catch(err => alert("Error verifying payment"));
             }
         });
@@ -220,5 +289,66 @@ document.getElementById('ask-ai-btn').addEventListener('click', async () => {
         aiBtn.textContent = "Ask Gemini";
         aiBtn.disabled = false;
         aiPromptInput.value = '';
+    }
+});
+
+// Premium Dashboard Logic
+document.getElementById('load-dashboard-btn').addEventListener('click', async () => {
+    try {
+        const response = await axios.get('http://localhost:3000/premium/dashboard', config);
+        const { dailyBreakdown, monthlyBreakdown } = response.data;
+
+        const dailyTableBody = document.querySelector('#daily-table tbody');
+        dailyTableBody.innerHTML = '';
+        dailyBreakdown.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.description}</td>
+                <td>${item.category}</td>
+                <td>$${item.income.toFixed(2)}</td>
+                <td>$${item.expense.toFixed(2)}</td>
+            `;
+            dailyTableBody.appendChild(tr);
+        });
+
+        const monthlyTableBody = document.querySelector('#monthly-table tbody');
+        monthlyTableBody.innerHTML = '';
+        monthlyBreakdown.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.month}</td>
+                <td>$${item.income.toFixed(2)}</td>
+                <td>$${item.expense.toFixed(2)}</td>
+                <td>$${item.savings.toFixed(2)}</td>
+            `;
+            monthlyTableBody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+        alert('Could not load dashboard.');
+    }
+});
+
+// Download Expenses Feature
+document.getElementById('download-expenses-btn').addEventListener('click', async () => {
+    try {
+        const response = await axios.get('http://localhost:3000/premium/download', {
+            ...config,
+            responseType: 'blob' 
+        });
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'expenses.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } catch (error) {
+        console.error('Error downloading expenses:', error);
+        alert('Could not download expenses. Please try again.');
     }
 });

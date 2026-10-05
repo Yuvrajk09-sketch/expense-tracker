@@ -10,3 +10,111 @@ exports.getLeaderboardData = async () => {
     
     return leaderboard;
 };
+
+exports.getDashboardData = async (userId) => {
+    const { Expense, Income } = require('../models');
+    
+    // Fetch all expenses and incomes for the user
+    const expenses = await Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    const incomes = await Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    
+    const dailyBreakdownMap = {};
+    const monthlyBreakdownMap = {};
+    
+    // Process Expenses
+    expenses.forEach(exp => {
+        const dateObj = new Date(exp.createdAt);
+        const dateStr = dateObj.toLocaleDateString();
+        const monthStr = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        // Daily
+        const dailyKey = `${dateStr}_${exp.description}_${exp.category}_expense`;
+        if (!dailyBreakdownMap[dailyKey]) {
+            dailyBreakdownMap[dailyKey] = {
+                date: dateStr,
+                description: exp.description,
+                category: exp.category,
+                income: 0,
+                expense: 0,
+                createdAt: exp.createdAt
+            };
+        }
+        dailyBreakdownMap[dailyKey].expense += exp.amount;
+        
+        // Monthly
+        if (!monthlyBreakdownMap[monthStr]) {
+            monthlyBreakdownMap[monthStr] = { month: monthStr, income: 0, expense: 0, savings: 0 };
+        }
+        monthlyBreakdownMap[monthStr].expense += exp.amount;
+    });
+
+    // Process Incomes
+    incomes.forEach(inc => {
+        const dateObj = new Date(inc.createdAt);
+        const dateStr = dateObj.toLocaleDateString();
+        const monthStr = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        // Daily
+        const dailyKey = `${dateStr}_${inc.description}_${inc.category}_income`;
+        if (!dailyBreakdownMap[dailyKey]) {
+            dailyBreakdownMap[dailyKey] = {
+                date: dateStr,
+                description: inc.description,
+                category: inc.category,
+                income: 0,
+                expense: 0,
+                createdAt: inc.createdAt
+            };
+        }
+        dailyBreakdownMap[dailyKey].income += inc.amount;
+        
+        // Monthly
+        if (!monthlyBreakdownMap[monthStr]) {
+            monthlyBreakdownMap[monthStr] = { month: monthStr, income: 0, expense: 0, savings: 0 };
+        }
+        monthlyBreakdownMap[monthStr].income += inc.amount;
+    });
+    
+    // Calculate Savings for Monthly
+    Object.values(monthlyBreakdownMap).forEach(month => {
+        month.savings = month.income - month.expense;
+    });
+    
+    const dailyBreakdown = Object.values(dailyBreakdownMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const monthlyBreakdown = Object.values(monthlyBreakdownMap);
+    
+    return { dailyBreakdown, monthlyBreakdown };
+};
+
+exports.getUserExpenses = async (userId) => {
+    const { Expense, Income } = require('../models');
+    const expenses = await Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    const incomes = await Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
+    
+    const combined = [];
+    
+    expenses.forEach(exp => {
+        combined.push({
+            date: new Date(exp.createdAt).toLocaleDateString(),
+            description: exp.description,
+            category: exp.category,
+            income: 0,
+            expense: exp.amount,
+            createdAt: exp.createdAt
+        });
+    });
+    
+    incomes.forEach(inc => {
+        combined.push({
+            date: new Date(inc.createdAt).toLocaleDateString(),
+            description: inc.description,
+            category: inc.category,
+            income: inc.amount,
+            expense: 0,
+            createdAt: inc.createdAt
+        });
+    });
+    
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return combined;
+};

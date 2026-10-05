@@ -12,6 +12,7 @@ const purchaseRoutes = require('./routes/purchaseRoutes');
 const premiumRoutes = require('./routes/premiumRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const passwordRoutes = require('./routes/passwordRoutes');
+const incomeRoutes = require('./routes/incomeRoutes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/purchase', purchaseRoutes);
 app.use('/premium', premiumRoutes);
 app.use('/ai', aiRoutes);
 app.use('/password', passwordRoutes);
+app.use('/income', incomeRoutes);
 
 sequelize.sync({ alter: true })
   .then((result) => { 

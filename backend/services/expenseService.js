@@ -18,8 +18,35 @@ exports.addExpense = async (expenseData) => {
   }
 };
 
-exports.getExpenses = (userId) => {
-  return Expense.findAll({ where: { userId } });
+exports.getExpenses = async (userId, offset = 0, limit = 50) => {
+  // Use raw query for UNION to combine and paginate both tables
+  const countQuery = `
+    SELECT COUNT(*) as total FROM (
+      SELECT id FROM expenses WHERE userId = ?
+      UNION ALL
+      SELECT id FROM incomes WHERE userId = ?
+    ) as transactions
+  `;
+  const countResult = await sequelize.query(countQuery, {
+    replacements: [userId, userId],
+    type: sequelize.QueryTypes.SELECT
+  });
+  
+  const totalCount = countResult[0].total;
+
+  const dataQuery = `
+    SELECT id, amount, description, category, createdAt, 'expense' as type FROM expenses WHERE userId = ?
+    UNION ALL
+    SELECT id, amount, description, category, createdAt, 'income' as type FROM incomes WHERE userId = ?
+    ORDER BY createdAt DESC
+    LIMIT ? OFFSET ?
+  `;
+  const rows = await sequelize.query(dataQuery, {
+    replacements: [userId, userId, limit, offset],
+    type: sequelize.QueryTypes.SELECT
+  });
+
+  return { count: totalCount, rows };
 };
 
 exports.deleteExpense = async (id, userId) => {
