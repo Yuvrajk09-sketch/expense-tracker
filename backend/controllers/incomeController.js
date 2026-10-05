@@ -75,3 +75,20 @@ exports.deleteIncome = async (req, res, next) => {
     res.status(500).json({ error: err });
   }
 };
+
+exports.updateIncome = async (req, res, next) => {
+  try {
+    const incomeId = req.params.id;
+    const userId = req.user.id;
+    const { amount, description, category } = req.body;
+    
+    if (!amount || !description || !category) {
+      return res.status(400).json({ message: 'All fields are mandatory' });
+    }
+
+    await incomeService.updateIncome(incomeId, { amount, description, category }, userId);
+    res.status(200).json({ message: 'Income successfully updated' });
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
+};

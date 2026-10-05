@@ -13,6 +13,7 @@ const downloadBtn = document.getElementById('download-expenses-btn');
 const premiumDashboardSection = document.getElementById('premium-dashboard-section');
 
 let currentEditId = null;
+let currentIncomeEditId = null;
 let currentPage = 1;
 let currentLimit = localStorage.getItem('expensesLimit') || 5;
 
@@ -80,7 +81,13 @@ document.getElementById('income-form').addEventListener('submit', async (e) => {
     const incomeData = { amount, description, category };
 
     try {
-        await axios.post('http://localhost:3000/income/add-income', incomeData, config);
+        if (currentIncomeEditId) {
+            await axios.put(`http://localhost:3000/income/update-income/${currentIncomeEditId}`, incomeData, config);
+            currentIncomeEditId = null;
+            document.getElementById('income-submit-btn').textContent = 'Add Income';
+        } else {
+            await axios.post('http://localhost:3000/income/add-income', incomeData, config);
+        }
         document.getElementById('income-form').reset();
         fetchExpenses();
     } catch (error) {
@@ -132,14 +139,11 @@ function showExpenseOnScreen(expense) {
     
     const actionsDiv = document.createElement('div');
     
-    // We only support editing expenses for now based on original code
-    if (!isIncome) {
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-sm btn-outline-warning me-2';
-        editBtn.textContent = 'Edit';
-        editBtn.onclick = () => editExpense(expense);
-        actionsDiv.appendChild(editBtn);
-    }
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm btn-outline-warning me-2';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => isIncome ? editIncome(expense) : editExpense(expense);
+    actionsDiv.appendChild(editBtn);
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-outline-danger';
@@ -174,6 +178,15 @@ function editExpense(expense) {
     
     currentEditId = expense.id;
     document.getElementById('submit-btn').textContent = 'Update Expense';
+}
+
+function editIncome(income) {
+    document.getElementById('income-amount').value = income.amount;
+    document.getElementById('income-description').value = income.description;
+    document.getElementById('income-category').value = income.category;
+    
+    currentIncomeEditId = income.id;
+    document.getElementById('income-submit-btn').textContent = 'Update Income';
 }
 
 window.addEventListener('DOMContentLoaded', fetchExpenses);

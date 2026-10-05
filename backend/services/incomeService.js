@@ -37,3 +37,18 @@ exports.deleteIncome = async (id, userId) => {
     throw err;
   }
 };
+
+exports.updateIncome = async (id, incomeData, userId) => {
+  const t = await sequelize.transaction();
+  try {
+    const income = await Income.findOne({ where: { id, userId }, transaction: t });
+    if (income) {
+      await income.update(incomeData, { transaction: t });
+    }
+    await t.commit();
+    return true;
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+};
