@@ -2,6 +2,7 @@ const uuid = require('uuid');
 const axios = require('axios');
 const bcrypt = require('bcrypt');
 const { User, ForgotPasswordRequests } = require('../models');
+const sequelize = require('../util/database');
 
 exports.forgotpassword = async (req, res) => {
     try {
@@ -70,9 +71,17 @@ exports.updatepassword = async (req, res) => {
         if (user) {
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(newpassword, saltRounds);
-            await user.update({ password: hashedPassword });
-            await resetpasswordrequest.update({ isActive: false });
-            res.status(200).json({ success: true, message: 'Successfully updated the password. You can now login.' });
+            
+            const t = await sequelize.transaction();
+            try {
+                await user.update({ password: hashedPassword }, { transaction: t });
+                await resetpasswordrequest.update({ isActive: false }, { transaction: t });
+                await t.commit();
+                res.status(200).json({ success: true, message: 'Successfully updated the password. You can now login.' });
+            } catch (error) {
+                await t.rollback();
+                throw new Error('Database transaction failed');
+            }
         } else {
             return res.status(404).json({ success: false, message: 'User does not exist' });
         }
