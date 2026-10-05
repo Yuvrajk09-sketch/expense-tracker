@@ -50,6 +50,7 @@ exports.updateExpense = async (req, res, next) => {
   try {
     const expenseId = req.params.id;
     const userId = req.user.id;
+    const { amount, description, category } = req.body;
     
     if (!amount || !description || !category) {
       return res.status(400).json({ message: 'All fields are mandatory' });
