@@ -1,4 +1,5 @@
 const { User } = require('../models');
+const premiumService = require('../services/premiumService');
 
 exports.getLeaderboard = async (req, res, next) => {
   try {
@@ -10,12 +11,7 @@ exports.getLeaderboard = async (req, res, next) => {
       return res.status(403).json({ message: 'Unauthorized: Premium membership required' });
     }
 
-    // Query the database to get all users and their total expenses
-    // Sort them in descending order (highest total expenses first)
-    const leaderboard = await User.findAll({
-      attributes: ['id', 'username', 'totalExpenses'], // Only fetch the fields we need to save bandwidth
-      order: [['totalExpenses', 'DESC']]
-    });
+    const leaderboard = await premiumService.getLeaderboardData();
 
     res.status(200).json(leaderboard);
   } catch (err) {

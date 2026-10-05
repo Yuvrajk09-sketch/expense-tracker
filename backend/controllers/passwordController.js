@@ -11,7 +11,7 @@ exports.forgotpassword = async (req, res) => {
         if (user) {
             const id = uuid.v4();
             await user.createForgotpassword({ id, isActive: true });
-            
+
             const brevoApiKey = process.env.BREVO_API_KEY;
             const url = 'https://api.brevo.com/v3/smtp/email';
             const data = {
@@ -62,7 +62,7 @@ exports.updatepassword = async (req, res) => {
         if (!resetpasswordrequest) {
             return res.status(404).json({ success: false, message: 'Invalid request' });
         }
-        
+
         if (!resetpasswordrequest.isActive) {
             return res.status(400).json({ success: false, message: 'Link has expired' });
         }
@@ -71,7 +71,7 @@ exports.updatepassword = async (req, res) => {
         if (user) {
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(newpassword, saltRounds);
-            
+
             const t = await sequelize.transaction();
             try {
                 await user.update({ password: hashedPassword }, { transaction: t });
