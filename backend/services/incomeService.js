@@ -1,10 +1,11 @@
-const { Income, User, MonthlySummary } = require('../models');
+const { Transaction, User, MonthlySummary } = require('../models');
 const sequelize = require('../util/database');
 
 exports.addIncome = async (incomeData) => {
   const t = await sequelize.transaction();
   try {
-    const income = await Income.create(incomeData, { transaction: t });
+    incomeData.type = 'income';
+    const income = await Transaction.create(incomeData, { transaction: t });
     // Update Monthly Summary
     const monthStr = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
     const [summary] = await MonthlySummary.findOrCreate({
@@ -23,8 +24,8 @@ exports.addIncome = async (incomeData) => {
 };
 
 exports.getIncomes = (userId, offset = 0, limit = 50) => {
-  return Income.findAndCountAll({ 
-    where: { userId },
+  return Transaction.findAndCountAll({ 
+    where: { userId, type: 'income' },
     offset,
     limit,
     order: [['createdAt', 'DESC']]
@@ -34,7 +35,7 @@ exports.getIncomes = (userId, offset = 0, limit = 50) => {
 exports.deleteIncome = async (id, userId) => {
   const t = await sequelize.transaction();
   try {
-    const income = await Income.findOne({ where: { id, userId }, transaction: t });
+    const income = await Transaction.findOne({ where: { id, userId, type: 'income' }, transaction: t });
     if (income) {
       const monthStr = new Date(income.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' });
       const summary = await MonthlySummary.findOne({
@@ -58,7 +59,7 @@ exports.deleteIncome = async (id, userId) => {
 exports.updateIncome = async (id, incomeData, userId) => {
   const t = await sequelize.transaction();
   try {
-    const income = await Income.findOne({ where: { id, userId }, transaction: t });
+    const income = await Transaction.findOne({ where: { id, userId, type: 'income' }, transaction: t });
     if (income) {
       const difference = Number(incomeData.amount) - Number(income.amount);
       const monthStr = new Date(income.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' });

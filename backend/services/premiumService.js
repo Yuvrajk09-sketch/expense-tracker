@@ -12,57 +12,39 @@ exports.getLeaderboardData = async () => {
 };
 
 exports.getDashboardData = async (userId) => {
-    const { Expense, Income, MonthlySummary } = require('../models');
+    const { Transaction, MonthlySummary } = require('../models');
     
-    // Fetch all expenses, incomes, and monthly summaries concurrently
-    const [expenses, incomes, monthlySummaries] = await Promise.all([
-        Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
-        Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
+    // Fetch all transactions and monthly summaries concurrently
+    const [transactions, monthlySummaries] = await Promise.all([
+        Transaction.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
         MonthlySummary.findAll({ where: { userId } })
     ]);
     
     const dailyBreakdownMap = {};
     
-    // Process Expenses
-    expenses.forEach(exp => {
-        const dateObj = new Date(exp.createdAt);
+    // Process Transactions
+    transactions.forEach(txn => {
+        const dateObj = new Date(txn.createdAt);
         const dateStr = dateObj.toLocaleDateString();
-        const monthStr = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
         
         // Daily
-        const dailyKey = `${dateStr}_${exp.description}_${exp.category}_expense`;
+        const dailyKey = `${dateStr}_${txn.description}_${txn.category}_${txn.type}`;
         if (!dailyBreakdownMap[dailyKey]) {
             dailyBreakdownMap[dailyKey] = {
                 date: dateStr,
-                description: exp.description,
-                category: exp.category,
+                description: txn.description,
+                category: txn.category,
                 income: 0,
                 expense: 0,
-                createdAt: exp.createdAt
+                createdAt: txn.createdAt
             };
         }
-        dailyBreakdownMap[dailyKey].expense += exp.amount;
-    });
-
-    // Process Incomes
-    incomes.forEach(inc => {
-        const dateObj = new Date(inc.createdAt);
-        const dateStr = dateObj.toLocaleDateString();
-        const monthStr = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
         
-        // Daily
-        const dailyKey = `${dateStr}_${inc.description}_${inc.category}_income`;
-        if (!dailyBreakdownMap[dailyKey]) {
-            dailyBreakdownMap[dailyKey] = {
-                date: dateStr,
-                description: inc.description,
-                category: inc.category,
-                income: 0,
-                expense: 0,
-                createdAt: inc.createdAt
-            };
+        if (txn.type === 'income') {
+            dailyBreakdownMap[dailyKey].income += txn.amount;
+        } else {
+            dailyBreakdownMap[dailyKey].expense += txn.amount;
         }
-        dailyBreakdownMap[dailyKey].income += inc.amount;
     });
     
     const dailyBreakdown = Object.values(dailyBreakdownMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -79,36 +61,17 @@ exports.getDashboardData = async (userId) => {
 };
 
 exports.getUserExpenses = async (userId) => {
-    const { Expense, Income } = require('../models');
-    const [expenses, incomes] = await Promise.all([
-        Expense.findAll({ where: { userId }, order: [['createdAt', 'DESC']] }),
-        Income.findAll({ where: { userId }, order: [['createdAt', 'DESC']] })
-    ]);
+    const { Transaction } = require('../models');
+    const transactions = await Transaction.findAll({ where: { userId }, order: [['createdAt', 'DESC']] });
     
-    const combined = [];
+    const combined = transactions.map(txn => ({
+        date: new Date(txn.createdAt).toLocaleDateString(),
+        description: txn.description,
+        category: txn.category,
+        income: txn.type === 'income' ? txn.amount : 0,
+        expense: txn.type === 'expense' ? txn.amount : 0,
+        createdAt: txn.createdAt
+    }));
     
-    expenses.forEach(exp => {
-        combined.push({
-            date: new Date(exp.createdAt).toLocaleDateString(),
-            description: exp.description,
-            category: exp.category,
-            income: 0,
-            expense: exp.amount,
-            createdAt: exp.createdAt
-        });
-    });
-    
-    incomes.forEach(inc => {
-        combined.push({
-            date: new Date(inc.createdAt).toLocaleDateString(),
-            description: inc.description,
-            category: inc.category,
-            income: inc.amount,
-            expense: 0,
-            createdAt: inc.createdAt
-        });
-    });
-    
-    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return combined;
 };

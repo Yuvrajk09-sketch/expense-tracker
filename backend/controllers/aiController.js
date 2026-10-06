@@ -1,4 +1,4 @@
-const { Expense } = require('../models');
+const { Transaction } = require('../models');
 const { GoogleGenAI } = require('@google/genai');
 
 // Initialize Gemini API
@@ -12,8 +12,8 @@ exports.getFinancialAdvice = async (req, res) => {
         }
 
         // 1. Fetch only the 50 most recent expenses for the logged-in user to save AI tokens and DB load
-        const expenses = await Expense.findAll({ 
-            where: { userId: req.user.id },
+        const expenses = await Transaction.findAll({ 
+            where: { userId: req.user.id, type: 'expense' },
             order: [['createdAt', 'DESC']],
             limit: 50
         });

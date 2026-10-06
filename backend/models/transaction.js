@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../util/database');
 
-const Expense = sequelize.define('expense', {
+const Transaction = sequelize.define('transaction', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -19,7 +19,11 @@ const Expense = sequelize.define('expense', {
   category: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  type: {
+    type: DataTypes.ENUM('income', 'expense'),
+    allowNull: false
   }
 });
 
-module.exports = Expense;
+module.exports = Transaction;
