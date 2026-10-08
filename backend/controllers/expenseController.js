@@ -36,7 +36,7 @@ exports.getExpenses = async (req, res, next) => {
     const MAX_LIMIT = 50;
     if (limit > MAX_LIMIT) limit = MAX_LIMIT;
 
-    let offset = (page - 1) * limit;
+    let offset = (page - 1) * limit; 
     
     let { count, rows: expenses } = await expenseService.getExpenses(userId, offset, limit);
 

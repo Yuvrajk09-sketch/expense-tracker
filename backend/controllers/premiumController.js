@@ -34,6 +34,8 @@ exports.getDashboard = async (req, res, next) => {
   }
 };
 
+const PDFDocument = require('pdfkit');
+
 exports.downloadExpenses = async (req, res, next) => {
   try {
     const requestingUser = await User.findByPk(req.user.id);
@@ -42,15 +44,28 @@ exports.downloadExpenses = async (req, res, next) => {
     }
     const expenses = await premiumService.getUserExpenses(req.user.id);
     
-    // Generate CSV string
-    let csvStr = 'Date,Description,Category,Income,Expense\n';
+    const doc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="report.pdf"');
+    doc.pipe(res);
+    
+    doc.fontSize(20).text('Financial Report', { align: 'center' });
+    doc.moveDown();
+    
+    doc.fontSize(12).font('Helvetica-Bold').text('Date                      Description                  Category           Income       Expense');
+    doc.moveDown(0.5);
+    
+    doc.font('Helvetica');
     expenses.forEach(item => {
-      csvStr += `"${item.date}","${item.description}","${item.category}",${item.income},${item.expense}\n`;
+      const dateStr = String(item.date).padEnd(25, ' ');
+      const descStr = String(item.description).substring(0, 25).padEnd(28, ' ');
+      const catStr = String(item.category).substring(0, 15).padEnd(18, ' ');
+      const incStr = String(item.income).padEnd(12, ' ');
+      const expStr = String(item.expense);
+      doc.fontSize(10).text(`${dateStr}${descStr}${catStr}${incStr}${expStr}`);
     });
     
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="report.csv"');
-    res.status(200).send(csvStr);
+    doc.end();
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });

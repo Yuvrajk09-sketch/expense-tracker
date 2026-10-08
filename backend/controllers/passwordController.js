@@ -14,11 +14,12 @@ exports.forgotpassword = async (req, res) => {
 
             const brevoApiKey = process.env.BREVO_API_KEY;
             const url = 'https://api.brevo.com/v3/smtp/email';
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
             const data = {
                 sender: { email: "yuvraj.keshu09@gmail.com" },
                 to: [{ email: user.email }],
                 subject: "Reset your password",
-                htmlContent: `<p>Click <a href="http://localhost:8080/resetpassword.html?id=${id}">here</a> to reset your password</p>`
+                htmlContent: `<p>Click <a href="${frontendUrl}/resetpassword?id=${id}">here</a> to reset your password</p>`
             };
 
             const response = await axios.post(url, data, {
