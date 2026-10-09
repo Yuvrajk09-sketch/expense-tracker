@@ -45,21 +45,37 @@ function ResetPassword() {
   };
 
   return (
-    <div className="container mt-5 d-flex justify-content-center">
-      <div className="card shadow p-4" style={{ width: '100%', maxWidth: '400px' }}>
-        <h2 className="text-center mb-4">Reset Password</h2>
-        
-        {message && <div className={`alert ${isValid === false ? 'alert-danger' : 'alert-info'}`}>{message}</div>}
-        
-        {isValid && (
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">New Password</label>
-              <input type="password" className="form-control" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Reset Password</h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+          
+          {message && (
+            <div className={`mb-4 px-4 py-3 rounded relative border ${isValid === false ? 'bg-red-50 border-red-200 text-red-600' : 'bg-blue-50 border-blue-200 text-blue-700'}`} role="alert">
+              <span className="block sm:inline">{message}</span>
             </div>
-            <button type="submit" className="btn btn-primary w-100">Update Password</button>
-          </form>
-        )}
+          )}
+          
+          {isValid && (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">New Password</label>
+                <div className="mt-1">
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  Update Password
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

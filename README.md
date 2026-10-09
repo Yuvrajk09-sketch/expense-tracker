@@ -1,84 +1,71 @@
-# Expense Tracker Full Stack 💰
+# Expenso: Premium SaaS Expense Tracker
 
-A full-stack Expense Tracker application built with Node.js, Express, MySQL (Sequelize), and plain HTML/CSS/JS. It features secure JWT authentication, complete CRUD functionality for expenses, and a fully integrated Cashfree Payment Gateway to allow users to upgrade to a "Premium" status.
+![Expenso Banner](https://via.placeholder.com/1200x400.png?text=Expenso:+Premium+Financial+SaaS)
 
-## 🚀 Features
+Expenso is a modern, high-performance, full-stack expense tracking application designed with a premium SaaS aesthetic. Built for speed and scale, Expenso allows users to track their daily finances, upgrade to premium features, and compete on financial leaderboards.
 
-*   **User Authentication**: Secure Sign-up and Login using `bcrypt` for password hashing and `jsonwebtoken` for stateless session management.
-*   **Expense Management**: Users can Add, Edit, Delete, and View their daily expenses.
-*   **Data Isolation**: Every expense is tied strictly to the logged-in user via Foreign Keys. A user can only see and modify their own expenses.
-*   **Premium Membership**: Users can purchase a Premium Membership via the **Cashfree Payment Gateway**.
+## 🚀 Key Features
 
----
+- **Modern SaaS Dashboard**: A beautiful, responsive interface built with Tailwind CSS v4 and Lucide-React icons.
+- **Robust Authentication**: Secure user login, signup, and JWT-based session management, featuring instant post-signup auto-login.
+- **Premium Tier System**: Users can upgrade to a Premium account unlocking exclusive analytics and a real-time leaderboard.
+- **Dynamic Ledger**: Seamlessly record, edit, and categorize both Income and Expenses via a streamlined layout.
+- **Mobile First, Desktop Perfect**: Features a resilient off-canvas sidebar that stays out of your way until you need it.
 
-## 🏗️ Architecture & Technologies Used
+## 💻 Tech Stack
 
-### Frontend (Client-Side)
-*   **HTML/CSS/Bootstrap**: For a clean, responsive UI.
-*   **Vanilla JavaScript**: Handles DOM manipulation and events.
-*   **Axios**: For making asynchronous HTTP requests to the backend.
-*   **Cashfree V3 JS SDK**: Renders the secure payment modal natively in the browser.
+### Frontend (Client)
+- **Framework**: React.js 18
+- **Build Tool**: Vite (Lightning fast HMR & optimized builds)
+- **Styling**: Tailwind CSS v4 (Zero-runtime utility classes)
+- **Routing**: React Router DOM (with Lazy-loaded Code Splitting)
+- **State Management**: React Context API (`AuthContext`)
+- **HTTP Client**: Axios
 
-### Backend (Server-Side)
-*   **Node.js & Express**: The core server handling all API routes.
-*   **Sequelize ORM**: Manages database queries safely without writing raw SQL.
-*   **jsonwebtoken (JWT)**: Generates 1-hour expiry tokens for authorization.
-*   **bcrypt**: Hashes user passwords before storing them in the database.
-*   **dotenv**: Keeps environment variables (like API keys and Secrets) hidden securely.
+### Backend (Server)
+- **Runtime**: Node.js & Express.js
+- **Database**: MySQL / PostgreSQL (Sequelize ORM)
+- **Authentication**: JWT (JSON Web Tokens) & bcryptjs
+- **Architecture**: MVC (Controllers, Routes, Services)
 
-### Database
-*   **MySQL**: Relational database storing all application data.
+## ⚡ Performance Optimizations
 
----
+Expenso was architected with web vitals and perceived performance in mind:
 
-## 🗄️ Database Models & Relationships
+1. **Purged Legacy CSS**: Completely migrated away from Bootstrap to pure Tailwind CSS, reducing the CSS payload by over 100KB and eliminating layout reflow conflicts.
+2. **React Lazy Loading**: Implemented component-level Code Splitting (`React.lazy` & `Suspense`). Users only download the exact Javascript required for the page they are currently viewing.
+3. **Vendor Chunking**: Configured Rollup (`vite.config.js`) to split heavy dependencies (`react`, `axios`, `lucide-react`) into highly cacheable vendor chunks, guaranteeing near-instant subsequent page loads.
+4. **Form Hardening**: Added strict JS-level keystroke interception on financial inputs to prevent invalid scientific notation (`e`, `+`) from polluting state.
 
-1.  **User Model**: Stores `id`, `username`, `email`, `password` (hashed), and `ispremiumuser` (boolean).
-2.  **Expense Model**: Stores `id`, `amount`, `description`, `category`. 
-    *   *Relationship*: `Expense.belongsTo(User)` and `User.hasMany(Expense)`.
-3.  **Order Model**: Stores `id`, `paymentid`, `orderid`, `status` (`PENDING`, `SUCCESSFUL`, `FAILED`).
-    *   *Relationship*: `Order.belongsTo(User)` and `User.hasMany(Order)`.
+## 🛠️ Getting Started
 
----
+### Prerequisites
+- Node.js (v18+)
+- MySQL or PostgreSQL database running locally
 
-## 💳 Cashfree Payment Integration (Logic Breakdown)
+### Installation
 
-Integrating the payment gateway requires a careful "handshake" between the frontend, the backend, and the Cashfree servers. Here is the exact breakdown of how the premium purchase flow works:
+1. Clone the repository
+2. Install Backend dependencies:
+   ```bash
+   cd backend
+   npm install
+   ```
+3. Install Frontend dependencies:
+   ```bash
+   cd frontend-react
+   npm install
+   ```
 
-### 1. Backend Order Creation (`purchaseController.js`)
-When a user wants to buy premium, your backend must first register the "intent to pay" directly with Cashfree.
-*   **The Route**: `GET /purchase/premiummembership`.
-*   **Authentication**: It passes through the `auth.js` middleware, identifying the user via their JWT token.
-*   **Calling Cashfree**: Your backend uses `axios` to send a secure, server-to-server request to `https://sandbox.cashfree.com/pg/orders` containing the amount (₹2500) and the user's details.
-*   **Database Entry**: Before responding to the frontend, the backend inserts a `PENDING` row into the `orders` table to track this attempt.
-*   **The Response**: Cashfree replies with a highly secure `payment_session_id`. Your backend forwards this ID to your frontend.
+### Running Locally
 
-### 2. Frontend UI & SDK (`index.html` & `main.js`)
-The frontend is responsible for rendering the payment pop-up to the user.
-*   **The Button**: Clicking the "👑 Buy Premium" button triggers the API call above.
-*   **The SDK**: Using the `<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>`, the frontend passes the received `payment_session_id` into `cashfree.checkout({...})`. This tells the Cashfree SDK to open the secure payment overlay iframe on your screen.
+1. Start the backend server (ensure your `.env` is configured with DB credentials and JWT secret):
+   ```bash
+   npm run start
+   ```
+2. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
 
-### 3. Payment Verification & UI Update
-Once the user enters their test card details and clicks "Pay", Cashfree processes the money. 
-*   **The Callback**: The Cashfree pop-up triggers a `.then()` block in `main.js`. 
-*   **Calling the Backend Again**: The frontend takes the receipt ID (`result.paymentDetails.paymentMessage`) and sends it to the final backend route: `POST /purchase/updatetransactionstatus`.
-*   **The Final Update**: 
-    1.  The backend looks up the `PENDING` order via the `order_id`.
-    2.  If the payment was a success, it updates the order `status` to `SUCCESSFUL` and logs the `paymentid`.
-    3.  It updates the user's row: `ispremiumuser = true`.
-*   **Frontend Polish**: Finally, the frontend updates `localStorage` to remember the user is premium (`loggedInUser.ispremiumuser = true`) and instantly updates the button to a disabled "👑 Premium User" badge.
-
----
-
-## 🛠️ Setup & Installation
-
-1.  **Clone the Repository**.
-2.  **Backend Setup**:
-    *   Navigate to the `backend` folder.
-    *   Run `npm install`.
-    *   Create a `.env` file based on the environment variables required (JWT Secret, Cashfree keys).
-    *   Start the server: `node server.js`.
-3.  **Frontend Setup**:
-    *   Navigate to the `frontend` folder.
-    *   Serve the frontend using a local server (e.g., `npx serve` or VS Code Live Server) to prevent `file:///` CORS/security blocks with the payment gateway.
-4.  **Database Sync**: Sequelize automatically syncs the tables on startup (`sequelize.sync({ alter: true })`).
+Open your browser to `http://localhost:5173` and start tracking!
