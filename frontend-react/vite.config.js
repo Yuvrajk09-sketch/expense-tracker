@@ -7,9 +7,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'axios'],
-          ui: ['lucide-react']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('lucide-react')) return 'ui';
+            if (id.includes('react') || id.includes('axios')) return 'vendor';
+          }
         }
       }
     }

@@ -63,7 +63,7 @@ export const Home = () => {
       });
     } catch (err) {
       console.error(err);
-      alert('Something went wrong');
+      alert(err.response?.data?.message || 'Something went wrong');
     }
   };
 
